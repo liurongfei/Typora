@@ -34,7 +34,7 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
             e = p;
         //4.如果该位置与待插入的key不相同，则判断当前是否为树节点
         else if (p instanceof TreeNode)
-            //4.1 ===========================？？？？？？将待插入的key value
+            //4.1 插入
             e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
         else {
             //当前节点不是树节点,遍历链表，同时计数得链表长度
@@ -218,7 +218,60 @@ final Node<K,V>[] resize() {
 }
 ```
 
+## removeNode()
 
+```java
+/**
+ * Implements Map.remove and related methods.
+ *
+ * @param hash hash for key
+ * @param key the key
+ * @param value the value to match if matchValue, else ignored
+ * @param matchValue if true only remove if value is equal
+ * @param movable if false do not move other nodes while removing
+ * @return the node, or null if none
+ */
+final Node<K,V> removeNode(int hash, Object key, Object value,
+                           boolean matchValue, boolean movable) {
+    Node<K,V>[] tab; Node<K,V> p; int n, index;
+    if ((tab = table) != null && (n = tab.length) > 0 &&
+        (p = tab[index = (n - 1) & hash]) != null) {
+        Node<K,V> node = null, e; K k; V v;
+        if (p.hash == hash &&
+            ((k = p.key) == key || (key != null && key.equals(k))))
+            node = p;
+        else if ((e = p.next) != null) {
+            if (p instanceof TreeNode)
+                node = ((TreeNode<K,V>)p).getTreeNode(hash, key);
+            else {
+                do {
+                    if (e.hash == hash &&
+                        ((k = e.key) == key ||
+                         (key != null && key.equals(k)))) {
+                        node = e;
+                        break;
+                    }
+                    p = e;
+                } while ((e = e.next) != null);
+            }
+        }
+        if (node != null && (!matchValue || (v = node.value) == value ||
+                             (value != null && value.equals(v)))) {
+            if (node instanceof TreeNode)
+                ((TreeNode<K,V>)node).removeTreeNode(this, tab, movable);
+            else if (node == p)
+                tab[index] = node.next;
+            else
+                p.next = node.next;
+            ++modCount;
+            --size;
+            afterNodeRemoval(node);
+            return node;
+        }
+    }
+    return null;
+}
+```
 
 # 二、面试题
 
@@ -230,9 +283,9 @@ final Node<K,V>[] resize() {
 
 线程不安全  可以使用null作为key和value
 
-## 3.HashMap为什么用红黑树而不用B树
+## 3.HashMap为什么用红黑树而不用B树等其他树
 
-HashMap原本是数组加链表，链表由于查询慢的特点，需要查找效率更高的树结构来代替。而如果用B树，在数据量不多的情况下，数据都会挤在一个节点，这个时候遍历效率就退化成了链表
+HashMap原本是数组加链表，链表由于查询慢的特点，需要查找效率更高的树结构来代替。而如果用B树，在数据量不多的情况下，数据都会挤在一个节点，这个时候遍历效率就退化成了链表。而avl树的查找效率虽然高，但是在插入和删除方面速度较慢。
 
 ## 4.HashMap的扩容机制
 
@@ -243,3 +296,17 @@ HashMap原本是数组加链表，链表由于查询慢的特点，需要查找�
 
 2. 数组扩容是根据负载因子决定的，如果当前元素个数大于阈值时，则进行扩容
 3. 当链表长度大于8时，会将链表转成红黑树，当链表长度缩小到另一个阈值时（6），又会将红黑树转换回单向链表提高性能
+
+## 5.HashMap为什么线程不安全
+
+在1.7以前，hashmap扩容是以头插法的形式将旧链表赋值到新数组，当并发执行操作时，会导致循环链表，从而引起死循环
+
+在1.8之后，hashmap扩容采用尾插法，解决了死循环的问题，但是还有数据覆盖的问题。并发执行put操作时，如果上一个线程判断完该下标位置为null，准备插入时，线程被挂起，下一个线程同样判断该位置为null并插入。当上一个线程再次获取时间片，因为之前已经判断过该位置为null，则会重新赋值给该位置，导致上一线程的数据被覆盖了。
+
+## 6.HashMap、LinkedHashMap、Hashtable的区别
+
+Hashtable是线程安全的，HashTable不允许使用null为键，但是允许value为null，Hashtable是一个古老的类，不建议使用，性能太低
+
+HashMap是线程不安全的，允许使用一个null为键，可以有多个null值，
+
+LInkedHashMap是HashMap的子类，底层维护entry数组，在HashMap的基础上给entry增加了before和after，相当于HashMap+双链表，所有LinkedHashMap可以根据插入顺序进行访问
