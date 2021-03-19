@@ -1,6 +1,6 @@
 
 
-
+# 一、源码
 
 ##  putVal(int, K, V, boolean,boolean ):V
 
@@ -89,10 +89,10 @@ final void treeifyBin(Node<K,V>[] tab, int hash) {
     //1.如果table数组为null或长度小于64，则不转成红黑树，而是进行扩容
     if (tab == null || (n = tab.length) < MIN_TREEIFY_CAPACITY)
         resize();
-    //2.如果？？？？？？？？？？？？======================
+    //2.如果当前值不等于null，
     else if ((e = tab[index = (n - 1) & hash]) != null) {
         TreeNode<K,V> hd = null, tl = null;
-        do {//循环遍历链表
+        do {//循环遍历原链表，创建新的树节点的链表
             TreeNode<K,V> p = replacementTreeNode(e, null);
             if (tl == null)
                 hd = p;
@@ -102,6 +102,7 @@ final void treeifyBin(Node<K,V>[] tab, int hash) {
             }
             tl = p;
         } while ((e = e.next) != null);
+        //将已经转成树节点的链表赋值给数组元素，将新链表转成红黑树
         if ((tab[index] = hd) != null)
             hd.treeify(tab);
     }
@@ -109,6 +110,8 @@ final void treeifyBin(Node<K,V>[] tab, int hash) {
 ```
 
 
+
+##  resize()
 
 ```Java
     /** 扩容机制
@@ -127,7 +130,7 @@ final Node<K,V>[] resize() {
     int oldThr = threshold;
     int newCap, newThr = 0;
     //1.判断原来的容量是否大于0，即判断是否为初始化或因链表过长扩容
-    //1.1 旧表已初始化
+    //1.1 旧表已初始化，容量大于0
     if (oldCap > 0) {
         //1.1.1如果原容量大于最大容量，将阈值设置为整型最大值，返回原数组
         if (oldCap >= MAXIMUM_CAPACITY) {
@@ -142,11 +145,13 @@ final Node<K,V>[] resize() {
     //旧表未初始化，但阈值大于0
     else if (oldThr > 0) // initial capacity was placed in threshold
         newCap = oldThr;
+    //旧表未初始化，但阈值等于0
     else {               // zero initial threshold signifies using defaults
+        //将新容量设置为16(默认容量),阈值为12(负载因子*默认容量)
         newCap = DEFAULT_INITIAL_CAPACITY;
         newThr = (int)(DEFAULT_LOAD_FACTOR * DEFAULT_INITIAL_CAPACITY);
     }
-    //
+    //如果是上诉第二种情况(即newThr未赋值)，新阈值设为（负载因子*默认容量）
     if (newThr == 0) {
         float ft = (float)newCap * loadFactor;
         newThr = (newCap < MAXIMUM_CAPACITY && ft < (float)MAXIMUM_CAPACITY ?
@@ -156,21 +161,29 @@ final Node<K,V>[] resize() {
     @SuppressWarnings({"rawtypes","unchecked"})
     Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
     table = newTab;
+    //如果原来的table不等于null，则进行数据迁移
     if (oldTab != null) {
+        //遍历数组
         for (int j = 0; j < oldCap; ++j) {
             Node<K,V> e;
+            //如果旧数组当前元素不为null，则进行数据迁移
             if ((e = oldTab[j]) != null) {
                 oldTab[j] = null;
+                //如果该元素没有链表，则将当前元素迁移到新计算的下标处
                 if (e.next == null)
                     newTab[e.hash & (newCap - 1)] = e;
+                //如果该元素为树节点
                 else if (e instanceof TreeNode)
                     ((TreeNode<K,V>)e).split(this, newTab, j, oldCap);
+                //如果该元素有链表，进行遍历
                 else { // preserve order
                     Node<K,V> loHead = null, loTail = null;
                     Node<K,V> hiHead = null, hiTail = null;
                     Node<K,V> next;
                     do {
                         next = e.next;
+                        //判断原来hash值和旧容量相与是否为0
+                        //如果为0，则不需要迁移，还在当前下标，将不需要迁移的拼成一条链
                         if ((e.hash & oldCap) == 0) {
                             if (loTail == null)
                                 loHead = e;
@@ -178,6 +191,7 @@ final Node<K,V>[] resize() {
                                 loTail.next = e;
                             loTail = e;
                         }
+                        //如果为1，则需要迁移到当前位置+oldCap处的位置，将需要迁移的拼成一条链
                         else {
                             if (hiTail == null)
                                 hiHead = e;
@@ -187,10 +201,12 @@ final Node<K,V>[] resize() {
                         }
                     } while ((e = next) != null);
                     if (loTail != null) {
+                        //如果存在不需要迁移的链，则将链放置在新数组相同的位置
                         loTail.next = null;
                         newTab[j] = loHead;
                     }
                     if (hiTail != null) {
+                        //如果存在需要迁移的链，将需要迁移的链迁移到原位置+oldCap处的位置
                         hiTail.next = null;
                         newTab[j + oldCap] = hiHead;
                     }
@@ -202,3 +218,28 @@ final Node<K,V>[] resize() {
 }
 ```
 
+
+
+# 二、面试题
+
+## 1.讲讲hashmap put的流程
+
+![img](https://static.nowcoder.com/images/activity/2021jxy/java/img/hashmap-4.png)
+
+## 2.HashMap有什么特点
+
+线程不安全  可以使用null作为key和value
+
+## 3.HashMap为什么用红黑树而不用B树
+
+HashMap原本是数组加链表，链表由于查询慢的特点，需要查找效率更高的树结构来代替。而如果用B树，在数据量不多的情况下，数据都会挤在一个节点，这个时候遍历效率就退化成了链表
+
+## 4.HashMap的扩容机制
+
+1. 数组的初始容量是16，而容量是以2的次方扩充的，
+
+* 为了能够用位运算代替取模运算
+* 提高性能，使用足够大的数组
+
+2. 数组扩容是根据负载因子决定的，如果当前元素个数大于阈值时，则进行扩容
+3. 当链表长度大于8时，会将链表转成红黑树，当链表长度缩小到另一个阈值时（6），又会将红黑树转换回单向链表提高性能
