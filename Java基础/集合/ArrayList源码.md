@@ -1,6 +1,6 @@
 # 一、源码
 
-> ArrayList底层是维护一个Object数组，默认为空数组，每次add时，会先检查数组长度，如果当前数组为默认数组，即空数组，则调用arrays.copyOf方法，扩容到默认容量10，否则扩容到响应的长度
+> ArrayList底层是维护一个Object数组，默认为空数组，每次add时，会先检查数组长度，如果当前数组为默认数组，即空数组，则调用Arrays.copyOf方法，扩容到默认容量10，否则扩容到响应的长度
 
 ## 成员变量
 
@@ -78,7 +78,7 @@ private void grow(int minCapacity) {
 }
 ```
 
-
+ 
 
 ```java
 public E remove(int index) {
