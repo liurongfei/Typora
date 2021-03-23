@@ -1,5 +1,3 @@
-
-
 # 一、源码
 
 ##  putVal(int, K, V, boolean,boolean ):V
@@ -48,7 +46,7 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
                         treeifyBin(tab, hash);
                     break;
                 }
-                //如果当前节点得hash和key都等于待插入的元素，则不做操作
+                //如果当前节点得hash和key都等于待插入的元素，则记录当前节点，停止循环
                 if (e.hash == hash &&
                     ((k = e.key) == key || (key != null && key.equals(k))))
                     break;
@@ -273,9 +271,11 @@ final Node<K,V> removeNode(int hash, Object key, Object value,
 }
 ```
 
-# 二、面试题
+# 二、理解
 
-## 1.讲讲hashmap put的流程
+## 1.hashmap put的流程，
+
+这个图挺好的，从牛客网上复制的，侵删
 
 ![img](https://static.nowcoder.com/images/activity/2021jxy/java/img/hashmap-4.png)
 
