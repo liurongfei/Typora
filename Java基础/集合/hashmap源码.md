@@ -309,4 +309,4 @@ Hashtable是线程安全的，HashTable不允许使用null为键，但是允许v
 
 HashMap是线程不安全的，允许使用一个null为键，可以有多个null值，
 
-LInkedHashMap是HashMap的子类，底层维护entry数组，在HashMap的基础上给entry增加了before和after，相当于HashMap+双链表，所有LinkedHashMap可以根据插入顺序进行访问
+LInkedHashMap是HashMap的子类，底层维护entry数组，在HashMap的基础上给entry增加了before和after，相当于HashMap+双链表，所有LinkedHashMap可以根据插入顺序进行访问 

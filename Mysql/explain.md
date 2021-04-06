@@ -34,23 +34,35 @@
 
 访问类型
 
+All：全表查询
+
+eq_ref:等职引用
+
+index:使用索引查询
+
 6. possible_keys
 
-
+可能用到的索引
 
 7. key
 
-显示使用哪个索引来优化访问，如果没有使用则为null
+实际用到的索引
 
 8. key_len
 
+   索引长度
+
 9. ref
 
-10. rows
+表之间的引用
 
-11. filtered
+8. rows
 
-12. Extra
+   查询到结果行数
+
+9. filtered
+
+10. Extra
 
 额外信息，一般是查询使用的方法
 
