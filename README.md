@@ -22,9 +22,9 @@ NIO
 
 synchronized和锁升级：无锁、偏向锁、轻量级锁、重锁
 
-Lock：重入锁、读写锁、AQS、
+Lock：重入锁、读写锁、AQS、✔
 
-锁分类：公平/非公平锁，乐观/悲观锁，共享/独占锁
+锁分类：公平/非公平锁，乐观/悲观锁，共享/独占锁✔
 
 死锁和活锁
 
@@ -37,6 +37,8 @@ Executor框架
 线程池：参数、阻塞队列
 
 并发容器：ConcurrentHashMap、CopyOnWriteSet
+
+ThreadLocal
 
 原子类
 
