@@ -6,7 +6,7 @@ JMM的主要目的是定义程序中各种变量的访问规则。
 
 JMM定义了Java 虚拟机(JVM)在计算机内存(RAM)中的工作方式。
 
-JVM是整个计算机虚拟模型，所以JMM是隶属于JVM的。
+JVM是整个计算机虚拟模型，所以JMM是隶属于JVM的。 
 
 
 
@@ -54,6 +54,10 @@ Java内存模型规定了所有的变量都存储在主内存，每条线程还�
 * store(存储)：作用于工作内存的变量，它把工作内存中一个变量的值传送到主内存中
 * write(写入)：作用于主内存的变量，它把从工作内存中得到得变量放入主内存得变量中。
 
+**针对long和double类型变量的特殊规则**
+
+> JMM要求上述8种操作具有原子性，但是对于64位的数据类型如long和double，允许虚拟机将没有被volatile修饰的64位数据类型的读写操作划分为两次32位的操作来进行。
+
 
 
 **JMM规定上述操作必须满足以下规则：**
@@ -67,7 +71,25 @@ Java内存模型规定了所有的变量都存储在主内存，每条线程还�
 * 只能对当前线程lock的变量执行unlock操作，
 * 对一个变量执行unlock前，必须先把此变量同步回主内存。
 
+## Java内存模型的特性
 
+### 1.原子性
+
+JMM保证read、load、use、assign、store、write这六个操作是原子的
+
+### 2.可见性
+
+JMM通过变量修改后将新值同步会主内存，变量读取前从主内存刷新变量值的方式实现可见性，无论是普通变量还是volatile变量。
+
+* volatile：volatile变量保证了新值能够**立刻同步**到主内存，每次使用前立刻从主内存刷新，而普通变量不可以，volatile保证了多线程时的可见性。
+* synchronized：对一个变量指向unlock前，必须先把变量同步回主内存
+* final：被final修饰的字段在构造器种一旦被初始化，并且构造器没有把this的引用传递出去，那么在其他线程可以看见final字段的值
+
+### 3.有序性
+
+如果在本线程内观察，所有操作都是有序的；（as-if-serial）
+
+如果在一个线程中观察另外一个线程，所有的操作都是无序的；（”指令重排“现象和“工作内存与主内存同步延迟”线程）
 
 ## 重排序
 
@@ -120,15 +142,11 @@ int c = a*b;
 **happens-before 规则**
 
 1. 程序顺序规则：一个线程种的每个操作，happens-before于该线程的任意后续操作。
-2. 监视器锁规则：对一个锁的解锁，happens-before 于随后对这个锁的加锁。
+2. 锁定规则：对一个锁的解锁，happens-before 于随后对这个锁的加锁。
 3. volatile变量规则：对于一个volatile域的写，happens-before 于任意后续对这个volatile域的读。
 4. 传递性：如果A happens-before B，且B happens-before C，那么A happens-before C
 5. start()规则：如果在线程A中执行ThreadB.start() （启动线程B），那么线程A的ThreadB.start()操作happens-before于线程B种的任何操作
 6. join()规则：如果线程A执行操作ThreadB.join()并成功返回，那么线程B中的任何操作happens-before于线程A从ThreadB.join()操作成功返回。
-
-
-
-## 顺序一致性
 
 
 
@@ -313,3 +331,11 @@ protected final boolean compareAndSetState(int expect, int update) {
 
 CAS操作具有volatile读和写的内存语义。
 
+
+
+## final域的内存语义
+
+对于final域，编译器和处理器要遵循两个重排序规则
+
+1. 在构造函数内对一个final域的写入，和随后把这个对象的引用赋值给一个引用变量，两个操作不能重排序
+2. 初次读包含final域的对象，和随后初次读这个final域，两个操作不能重排序
