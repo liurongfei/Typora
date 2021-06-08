@@ -271,7 +271,53 @@ final Node<K,V> removeNode(int hash, Object key, Object value,
 }
 ```
 
-# 二、理解
+# 二、特性
+
+## 1.初始值
+
+* **默认负载因子**loadFactor**：0.75f**
+
+> 0.75是一个折中的方案，负载因子过高可以减少空间开销，但是会增加查询成本，因为hash冲突增加了，那么红黑树就会变得复杂，负载因子过低会增加空间开销，
+
+* **默认容量为DEFAULT_INITIAL_CAPACITY=1<<4   (即16)**
+
+* 底层数组长度总为2的n次方(包括初始值和扩容时)
+
+> 即使通过构造函数传入初始容量,HashMap也会设置为第一个大于该值的2的次方.
+>
+> 原因是为了能够使用位运算代替取模运算.
+>
+> 位运算直接对内存操作,不需要转成十进制,处理速度块
+>
+> ```java
+> static final int tableSizeFor(int cap) {
+>     int n = cap - 1;
+>     n |= n >>> 1;
+>     n |= n >>> 2;
+>     n |= n >>> 4;
+>     n |= n >>> 8;
+>     n |= n >>> 16;
+>     return (n < 0) ? 1 : (n >= MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : n + 1;
+> }
+> ```
+
+* 默认阈值threshold: 默认负载因子*默认容量=12
+* 如果用户在构造函数指定了一个初始容量，那么HashMap将会选择大于该值的第一个2的幂次方为初始容量
+
+* **HashMap的hash值计算是通过hash()方法得到**
+
+将key的hashCode与其本身无符号右移16位相与，这样得到的hash值不会偏向0也不会偏向1
+
+> ```java
+>     static final int hash(Object key) {
+>         int h;
+>         return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
+>     }
+> ```
+
+
+
+# 三、理解
 
 ## 1.hashmap put的流程，
 
@@ -295,7 +341,8 @@ HashMap原本是数组加链表，链表由于查询慢的特点，需要查找�
 * 提高性能，使用足够大的数组
 
 2. 数组扩容是根据负载因子决定的，如果当前元素个数大于阈值时，则进行扩容
-3. 当链表长度大于8时，会将链表转成红黑树，当链表长度缩小到另一个阈值时（6），又会将红黑树转换回单向链表提高性能
+3. 当链表长度大于8时，如果数组长度大于64,会将链表转成红黑树，否则会先扩容
+4. 当链表长度缩小到另一个阈值时（6），又会将红黑树转换回单向链表提高性能
 
 ## 5.HashMap为什么线程不安全
 
@@ -310,3 +357,4 @@ Hashtable是线程安全的，HashTable不允许使用null为键，但是允许v
 HashMap是线程不安全的，允许使用一个null为键，可以有多个null值，
 
 LInkedHashMap是HashMap的子类，底层维护entry数组，在HashMap的基础上给entry增加了before和after，相当于HashMap+双链表，所有LinkedHashMap可以根据插入顺序进行访问 
+

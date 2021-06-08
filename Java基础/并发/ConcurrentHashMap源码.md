@@ -725,3 +725,4 @@ private void rehash(HashEntry<K,V> node) {
 ## 4.为什么Java 8中使用CAS+synchronized，不是使用CAS+reentrantLock
 
 synchronized可以很方便地锁住链表头节点，同时在1.6时synchronized做了优化，性能上和reentrantLock差不多，但是使用reentrantLock需要Node继承reentrantLock，但是需要同步地仅仅是头节点，这样增加了内存开销
+

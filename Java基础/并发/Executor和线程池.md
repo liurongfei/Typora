@@ -67,3 +67,73 @@ new ThreadPoolExecutor(corePoolSize,maximumPoolSize,keepAliveTime,unit,workQueue
 4. 如果线工作队列满了，线程池中的线程数达到最大线程数了，执行拒绝策略处理任务
 
 ![image-20210413165345318](image-20210413165345318.png)
+
+## 线程池原理
+
+### 核心变量 ctl
+
+高3位:runState生命周期
+
+* running=-1 (100)   允许接收新任务
+* shutdown=0 (000)   不允许接收新任务,但是会继续处理队列任务(调用shutdown()方法)
+* stop=1 (001)   不接受新任务,不处理队列任务,中断正在进行的任务(调用shutdownNow()方法)
+* tidying (010)  当所有进行的任务中断后,workerCount=0,由stop状态转为tidying状态,并执行terminated()方法
+* terminated (011)  当执行完terminated()方法后,由tidying状态转为terminated状态
+
+
+
+低29位:workerCount有效线程数量
+
+* 即workerCount最大为2^29-1
+
+### 内部类Worker
+
+Worder继承了AQS,实现了Runnable接口,作为执行的任务,
+
+**Worker成员变量** 
+
+* final Thread thread  线程工厂分配的线程,分配线程时给线程传入this(当前worker)
+* Runnable firstTask  需要执行的任务
+
+
+
+## 常用的线程池
+
+#### **newCachedThreadPool**
+
+```java
+public static ExecutorService newCachedThreadPool() {
+    return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+                                  60L, TimeUnit.SECONDS,
+                                  new SynchronousQueue<Runnable>());
+}
+```
+
+#### **newFixedThreadPool**
+
+```java
+public static ExecutorService newFixedThreadPool(int nThreads) {
+    return new ThreadPoolExecutor(nThreads, nThreads,
+                                  0L, TimeUnit.MILLISECONDS,
+                                  new LinkedBlockingQueue<Runnable>());
+}
+```
+
+#### **newSingleThreadExecutor**
+
+```java
+public static ExecutorService newSingleThreadExecutor() {
+    return new FinalizableDelegatedExecutorService
+        (new ThreadPoolExecutor(1, 1,
+                                0L, TimeUnit.MILLISECONDS,
+                                new LinkedBlockingQueue<Runnable>()));
+}
+```
+
+#### **newScheduleThreadPool**
+
+```java
+public static ScheduledExecutorService newScheduledThreadPool(int corePoolSize) {
+    return new ScheduledThreadPoolExecutor(corePoolSize);
+}
+```
